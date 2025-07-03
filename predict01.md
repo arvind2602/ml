@@ -49,13 +49,20 @@ import seaborn as sns
 print("Missing Values Before Cleaning:")
 display(df.isnull().sum())
 
+# Convert price to numeric by removing '$' and converting to float
+df['price'] = df['price'].astype(str).str.replace('$', '', regex=False)
+df['price'] = pd.to_numeric(df['price'], errors='coerce')
+
 # Impute missing values for numerical columns
-df['price'].fillna(df['price'].median(), inplace=True)
-df['minimum_nights'].fillna(df['minimum_nights'].median(), inplace=True)
-df['number_of_reviews'].fillna(df['number_of_reviews'].median(), inplace=True)
+df['price'] = df['price'].fillna(df['price'].median())
+df['reviews_per_month'] = df['reviews_per_month'].fillna(df['reviews_per_month'].median())
+df['rating'] = df['rating'].fillna(df['rating'].median())
+df['number_of_stays'] = df['number_of_stays'].fillna(df['number_of_stays'].median())
+df['5_stars'] = df['5_stars'].fillna(df['5_stars'].median())
 
 # Drop rows with missing categorical data if less than 5%
-df.dropna(subset=['neighbourhood', 'room_type'], inplace=True)
+df.dropna(subset=['name', 'host_name', 'last_review'], inplace=True)
+
 
 # Visualize outliers before treatment
 plt.figure(figsize=(15, 5))
@@ -65,16 +72,17 @@ sns.boxplot(y=df['price'])
 plt.title('Price Before Outlier Treatment')
 
 plt.subplot(1, 3, 2)
-sns.boxplot(y=df['minimum_nights'])
-plt.title('Minimum Nights Before Outlier Treatment')
+sns.boxplot(y=df['number_of_stays'])
+plt.title('Number of Stays Before Outlier Treatment')
 
 plt.subplot(1, 3, 3)
-sns.boxplot(y=df['number_of_reviews'])
-plt.title('Number of Reviews Before Outlier Treatment')
+sns.boxplot(y=df['reviews_per_month'])
+plt.title('Reviews per Month Before Outlier Treatment')
 plt.tight_layout()
 plt.show()
 
-# Method 1: IQR-based outlier handling for price, minimum_nights, and number_of_reviews
+
+# Method 1: IQR-based outlier handling for price, number_of_stays, and reviews_per_month
 def cap_outliers_iqr(series):
     Q1 = series.quantile(0.25)
     Q3 = series.quantile(0.75)
@@ -85,8 +93,8 @@ def cap_outliers_iqr(series):
 
 # Apply IQR capping
 df['price'] = cap_outliers_iqr(df['price'])
-df['minimum_nights'] = cap_outliers_iqr(df['minimum_nights'])
-df['number_of_reviews'] = cap_outliers_iqr(df['number_of_reviews'])
+df['number_of_stays'] = cap_outliers_iqr(df['number_of_stays'])
+df['reviews_per_month'] = cap_outliers_iqr(df['reviews_per_month'])
 
 # Method 2: Z-score-based outlier handling for price (alternative approach)
 def cap_outliers_zscore(series, threshold=3):
@@ -94,7 +102,7 @@ def cap_outliers_zscore(series, threshold=3):
     return series.clip(lower=series[z_scores > -threshold].min(), upper=series[z_scores < threshold].max())
 
 # Apply Z-score capping (for demonstration, applied to a copy of price)
-df['price_zscore'] = cap_outliers_zscore(df['price'])
+df['price_zscore'] = cap_outliers_zscore(df['price'].copy())
 
 # Visualize outliers after treatment
 plt.figure(figsize=(15, 5))
@@ -104,12 +112,12 @@ sns.boxplot(y=df['price'])
 plt.title('Price After IQR Treatment')
 
 plt.subplot(1, 3, 2)
-sns.boxplot(y=df['minimum_nights'])
-plt.title('Minimum Nights After IQR Treatment')
+sns.boxplot(y=df['number_of_stays'])
+plt.title('Number of Stays After IQR Treatment')
 
 plt.subplot(1, 3, 3)
-sns.boxplot(y=df['number_of_reviews'])
-plt.title('Number of Reviews After IQR Treatment')
+sns.boxplot(y=df['reviews_per_month'])
+plt.title('Reviews per Month After IQR Treatment')
 plt.tight_layout()
 plt.show()
 
@@ -121,14 +129,15 @@ plt.ylabel('Price')
 plt.xticks([0, 1], ['IQR Capped', 'Z-score Capped'])
 plt.show()
 
+
 print("\nMissing Values After Cleaning:")
 display(df.isnull().sum())
 print("\nPrice Distribution After IQR Outlier Treatment:")
 display(df['price'].describe())
-print("\nMinimum Nights Distribution After IQR Outlier Treatment:")
-display(df['minimum_nights'].describe())
+print("\nNumber of Stays Distribution After IQR Outlier Treatment:")
+display(df['number_of_stays'].describe())
 print("\nNumber of Reviews Distribution After IQR Outlier Treatment:")
-display(df['number_of_reviews'].describe())
+display(df['reviews_per_month'].describe())
 ```
 
 **Why This Matters**  
